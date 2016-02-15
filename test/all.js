@@ -1,5 +1,8 @@
 import chalk from "chalk";
 import itTest from "./it_test";
+import describeTest from "./describe_test";
+// import beforeTest from "./before_test";
+// import afterTest from "./after_test";
 
 function printSeparator() {
   /* eslint-disable max-len, no-console */
@@ -7,7 +10,12 @@ function printSeparator() {
 }
 
 printSeparator();
-const allTestsPassed = itTest();
+const allTestsPassed = (
+  itTest() &&
+  describeTest()
+  // beforeTest() &&
+  // afterTest();
+);
 printSeparator();
 
 process.exit(allTestsPassed ? 0 : 1);

@@ -1,11 +1,15 @@
-function newTestContext() {
+function newTestContext(parentContext, description) {
   const tests = [];
+  const childContexts = [];
 
   const context = {
     tests,
-    it(description, definition) {
+    childContexts,
+    parentContext,
+    description,
+    it(testDescription, definition) {
       tests.push({
-        description,
+        description: testDescription,
         definition,
         run: () => {
           try {
@@ -17,8 +21,18 @@ function newTestContext() {
         },
       });
     },
+    createChildContext(childContextDescription) {
+      const childContext = newTestContext(context, childContextDescription);
+      childContexts.push(childContext);
+      return childContext;
+    },
     run() {
-      return tests[0].run();
+      const testResults = tests.map((test) => test.run());
+      return testResults.reduce(({ success, failedTests, successfulTests }, testResult) => {
+        if (testResult.success) successfulTests.push(testResult);
+        if (!testResult.success) failedTests.push(testResult);
+        return { success: success && testResult.success, failedTests, successfulTests };
+      }, { success: true, failedTests: [], successfulTests: [] });
     },
   };
 
@@ -26,7 +40,23 @@ function newTestContext() {
 }
 
 function TestRunner() {
-  return newTestContext();
+  const rootContext = newTestContext();
+  let currentContext = rootContext;
+
+  function describe(description, definition) {
+    const newContext = currentContext.createChildContext(description);
+    currentContext = newContext;
+    definition();
+  }
+
+  function it(...args) {
+    currentContext.it(...args);
+  }
+
+  return Object.assign(Object.create(rootContext), {
+    describe,
+    it,
+  });
 }
 
 export default TestRunner;
